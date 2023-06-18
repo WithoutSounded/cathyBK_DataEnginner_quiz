@@ -1,6 +1,11 @@
 # cathyBK_DataEnginner_quiz
-國泰銀行 -- 資料科學工程師考題
-程式語言: Python
+國泰銀行 -- 資料科學工程師考題  
+程式語言: Python  
+data:  https://drive.google.com/drive/folders/17dZ0KMLadqqnlc6dRUmevBx0sq9DAQ5-?usp=drive_link
+output(result):  
+[filter.csv](https://drive.google.com/file/d/1HZDWtrKPnzph9b3brmdZtExQMikoIanV/view?usp=drive_link)
+[count.csv](https://drive.google.com/file/d/1u9BObKA23wn7PyOLmPJkTkN3bYEQ5fPo/view?usp=drive_link)
+
 
 1. 不限制方式下載【內政部不動產時價登錄網】中，【106年第1季】~【109年第4季】、位於【臺北市/新北市/高雄市】的
 【不動產買賣】資料，【桃園市/臺中市】的【預售屋買賣】資料，下載檔案格式選擇【CSV格式】，請選擇【非本期下載】。

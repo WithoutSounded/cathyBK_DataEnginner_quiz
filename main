@@ -1,0 +1,152 @@
+import os
+import fnmatch
+
+import numpy as np
+import pandas as pd
+
+
+def find_target_filePath(dataPath):
+    for folder in os.listdir(dataPath):
+        for file in os.listdir(dataPath+'/'+folder):
+            if fnmatch.fnmatch(file, '?_lvr_land_?.csv'):
+                full_path = dataPath+'/'+folder+'/'+file
+                yield full_path
+
+
+def read_data(path):
+    try:
+        df = pd.read_csv(path, header=1) 
+    except pd.errors.EmptyDataError:
+        print('Note: filename.csv was empty. Skipping.')
+        df = pd.DataFrame()
+        
+    return df
+
+def preprocessing(df, path):
+    # last one will be filename, second from the back will be that folder
+    keyWord = path.split('/')
+    
+    # ./data/106_1/H_lvr_land_B.csv -> 106_1_H_B
+    df_name = keyWord[-2]+'_'+keyWord[-1][0]+'_'+keyWord[-1][-5]
+    df['df_name'] = df_name
+    # floor: ch->digit
+    df['total floor number'] = df['total floor number'].apply(ch2num)
+    
+    return df
+
+def ch2num(ch_num):
+    num_list = []
+    num = 0
+    
+    if ch_num == '地下層':
+        return -1
+    
+    try:
+        ch_num = int(ch_num)
+    except:
+        pass
+
+    # 空白cell的處裡
+    if ch_num is np.nan:
+        return 0
+
+    # 數字紀錄樓層的cell e.g. 15,16,17
+    if isinstance(ch_num, int):
+        return ch_num
+
+    # 以中文數字紀錄樓層的cell e.g. 十五層,九層,二十五層
+
+    for ch in ch_num:
+        if ch == '層':
+            continue
+        num_list.append(number_map[ch])
+        
+    if len(num_list) == 1:
+        return num_list[0]
+    elif len(num_list) == 2:
+        # 10,20,30,40...,90
+        if num_list[1] == 10:
+            return num_list[0]*10
+        else:
+            # 11-19
+            return num_list[0]+num_list[1]
+    else:
+        return num_list[0]*10+num_list[2]
+
+# 處理中文數字的mapping
+number_map = {
+    "零": 0,
+    "一": 1,
+    "二": 2,
+    "三": 3,
+    "四": 4,
+    "五": 5,
+    "六": 6,
+    "七": 7,
+    "八": 8,
+    "九": 9,
+    "十":10
+}
+
+
+# main function
+
+# step 1, 將所需檔案下載好，使用程式讀取
+# dataPath = './testDataSet'
+dataPath = './data'
+
+number_rows = []
+target_df = []
+
+# step 2   使用pandas讀取特定檔案
+for filePath in find_target_filePath(dataPath):
+    # print(filePath)
+    
+    # read data, if data is empty then continue. Else preprocess and append df to list.
+    df = read_data(filePath)
+    if df.empty:
+        continue
+    
+    # 預處理
+    df_after = preprocessing(df, filePath)
+    number_rows.append(len(df_after.index))
+    target_df.append(df_after)
+    
+# step 3    merge all df
+df_all = pd.concat(target_df)
+
+
+# filter condition:
+# 主要用途: main use -> chinese (住家用)
+# 建物型態: building state -> chinese (住宅大樓(11層含以上有電梯))
+# 總樓層數: total floor number -> chinese with unit (>= 十三層)
+
+filter_result = df_all[(df_all['main use']=='住家用')&
+                       (df_all['building state']=='住宅大樓(11層含以上有電梯)')&
+                       (df_all['total floor number']>=13)]
+
+# save
+filter_result.to_csv('./filter.csv', encoding='utf_8_sig')
+
+
+
+# count condition:
+# 總件數 count(*)
+# 總車位數 count('berth shifting total area square meter' != 0)
+# 平均總價元 AVG('total price NTD')
+# 平均車位總價元 AVG('the berth total price NTD')
+total_count = len(df_all.index)
+total_number_parking = len(df_all[(df_all['berth shifting total area square meter'] > 0)])
+avg_total_price = df_all['total price NTD'].mean()
+avg_total_parking_price = df_all['the berth total price NTD'].mean()
+
+output_dict = {'total_count':total_count,
+               'total_number_parking':total_number_parking,
+               'avg_total_price':avg_total_price,
+               'avg_total_parking_price':avg_total_parking_price}
+# to df
+data = pd.DataFrame(output_dict, index=[0])
+# save as csv
+data.to_csv('./count.csv', encoding='utf_8_sig')
+
+

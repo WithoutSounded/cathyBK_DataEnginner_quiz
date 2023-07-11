@@ -1,4 +1,4 @@
-# cathyBK_DataEnginner_quiz
+# cathyInsurance_DataEnginner_quiz
 國泰產險 -- 資料科學工程師考題  
 程式語言: Python   
 [data](https://drive.google.com/drive/folders/17dZ0KMLadqqnlc6dRUmevBx0sq9DAQ5-?usp=drive_link)   
